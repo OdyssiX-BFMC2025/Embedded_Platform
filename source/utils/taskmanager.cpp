@@ -32,35 +32,47 @@
 #include <utils/taskmanager.hpp>
 
 namespace utils{
-    /******************************************************************************/
-    /** \brief  CTaskManager class constructor
+    /** \brief CTaskManager class implements a task scheduling and execution system
      *
-     *  Constructor method
+     * The CTaskManager class manages multiple periodic tasks and handles their execution:
      *
-     *  @param f_taskList      list of tasks
-     *  @param f_taskCount     number of tasks
-     *  @param f_baseFreq      base frequency
+     * Key components:
+     * - Task List: Array of CTask pointers to manage multiple tasks
+     * - Base Timer: Ticker that triggers task updates at specified frequency
+     * - Task Count: Number of tasks being managed
+     *
+     * Flow:
+     * 1. Constructor initializes task list and starts base timer
+     * 2. Timer triggers timerCallback() at specified frequency (e.g. every 1ms)
+     * 3. timerCallback() updates all tasks' internal timers
+     * 4. mainCallback() executes tasks that are ready to run
+     * 5. Process repeats
      */
     CTaskManager::CTaskManager(
             utils::CTask** f_taskList, 
             uint8_t f_taskCount, 
             std::chrono::milliseconds f_baseFreq
         )
-        : m_taskList(f_taskList)
-        , m_taskCount(f_taskCount)
+        : m_taskList(f_taskList)      // Store task list pointer
+        , m_taskCount(f_taskCount)    // Store number of tasks
     {
+        // Start timer to call timerCallback at specified frequency
         m_ticker.attach(mbed::callback(this,&CTaskManager::timerCallback), f_baseFreq);
     }
 
-    /** \brief  CTaskManager class destructor
-     *  
-     */
+    /** \brief Destructor stops the timer when object is destroyed */
     CTaskManager::~CTaskManager() 
     {
-        m_ticker.detach();
+        m_ticker.detach(); // Stop the timer
     }
     
-    /** @brief  The main callback method aims to apply the subtasks' run method. */
+    /** \brief Executes all tasks that are ready to run
+     *
+     * Called periodically by main loop to:
+     * 1. Iterate through all tasks
+     * 2. Call run() on each task
+     * 3. Task only executes if its period has elapsed
+     */
     void CTaskManager::mainCallback()
     {
         for(uint8_t i = 0; i < m_taskCount; i++)
@@ -69,7 +81,13 @@ namespace utils{
         }
     }
 
-    /** @brief  Timer callback method applies the subtasks' callback function. */
+    /** \brief Updates all tasks' internal timers
+     * 
+     * Called by base timer to:
+     * 1. Iterate through all tasks
+     * 2. Update each task's tick counter
+     * 3. Set triggered flag if task period elapsed
+     */
     void CTaskManager::timerCallback()
     {
         for(uint8_t i = 0; i < m_taskCount; i++)

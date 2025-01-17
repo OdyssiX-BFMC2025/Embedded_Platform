@@ -31,36 +31,54 @@
 
 #include <utils/taskmanager.hpp>
 
-namespace utils{
+namespace utils {
 
-    /******************************************************************************/
-    /** \brief  CTask class constructor
+    /** \brief CTask class implements a periodic task execution system
      *
-     *  It initializes the period and other private value of the task. 
+     * This class provides the base functionality for executing periodic tasks:
+     * 
+     * Flow:
+     * 1. Task is created with a specified period in milliseconds
+     * 2. timerCallback() is called every 1ms by the task manager
+     * 3. When accumulated ticks reach the period, task is triggered
+     * 4. run() checks if triggered and calls _run() implementation
+     * 5. Cycle repeats
      *
-     *  @param f_period      execution period
+     * Key member variables:
+     * - m_period: Time between task executions in milliseconds
+     * - m_ticks: Counter tracking elapsed time
+     * - m_triggered: Flag indicating task should execute
      */
-    CTask::CTask(std::chrono::milliseconds f_period) 
-        : m_period(f_period)
-        , m_ticks(std::chrono::milliseconds(0))
-        , m_triggered(false) 
+    CTask::CTask(std::chrono::milliseconds f_period)
+        : m_period(f_period)          // Set task period
+        , m_ticks(std::chrono::milliseconds(0))  // Initialize tick counter
+        , m_triggered(false)          // Start with task not triggered
     {
     }
 
-    /** \brief  CTask class destructor
-     *
-     */
-    CTask::~CTask() 
+    /** \brief Empty destructor as no cleanup needed */
+    CTask::~CTask()
     {
     }
 
-    void CTask::setNewPeriod(uint16_t f_period)
+    /** \brief Updates the task's execution period
+     * 
+     * @param f_period New period in milliseconds
+     * Resets tick counter when period changes
+     */
+    void CTask::setNewPeriod(uint16_t f_period) 
     {
         m_period = std::chrono::milliseconds(f_period);
         m_ticks = std::chrono::milliseconds(0);
     }
 
-    /** @brief  Timer callback */
+    /** \brief Called every millisecond by task manager
+     *
+     * Increments tick counter and checks if period elapsed
+     * When period reached:
+     * 1. Resets tick counter
+     * 2. Sets triggered flag for next run
+     */
     void CTask::timerCallback()
     {
         m_ticks += std::chrono::milliseconds(1);
@@ -71,11 +89,12 @@ namespace utils{
         }
     }
 
-    /** \brief  Run method
-     *
-     *  It applies the '_run' method, which implements the task's functionality. It has to override in the derived class.  
-     *  
-     *  
+    /** \brief Main task execution method
+     * 
+     * Checks if task is triggered and needs to run
+     * If triggered:
+     * 1. Clears triggered flag
+     * 2. Calls _run() virtual method implemented by derived class
      */
     void CTask::run()
     {
@@ -84,6 +103,6 @@ namespace utils{
             m_triggered = false;
             _run();
         }
-    }// namespace CTask
+    }
 
 }; // namespace utils

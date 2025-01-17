@@ -144,20 +144,25 @@ namespace brain{
             {
                 if(!m_speedingControl.inRange(l_speed)){ // Check the received reference speed is within range
                     sprintf(b,"The reference speed command is too high");
+                    m_serialPort.write("Speed command failed: Out of range\n", 35); // modification command: for rpi fedback
                     return;
                 }
 
                 m_state = 1;
 
                 m_speed = l_speed;
+
+                m_serialPort.write("Speed command received successfully\n", 36);// modification command: for feedback to rpi
             }
             else{
                 sprintf(b,"kl 30 is required!!");
+                m_serialPort.write("Speed command failed: KL 30 required\n", 38); // modification command: for feedback to rpi
             }
         }
         else
         {
             sprintf(b,"syntax error");
+            m_serialPort.write("Speed command failed: Syntax error\n", 35); // modification command: feedback to rpi
         }
     }
 
@@ -180,20 +185,24 @@ namespace brain{
             {
                 if( !m_steeringControl.inRange(l_angle)){ // Check the received steering angle
                     sprintf(b,"The steering angle command is too high");
+                    m_serialPort.write("Steering command failed: Out of range\n"); // modification command: for feedback to rpi
                     return;
                 }
 
                 m_state = 2;
 
                 m_steering = l_angle;
+                m_serialPort.write("Steering command receieved successfully\n"); // modification command: for feedback to rpi
             }
             else{
                 sprintf(b,"kl 30 is required!!");
+                m_serialPort.write("Steering command failed: KL 30 required\n"); // modification command: feedback to rpi
             }
         }
         else
         {
             sprintf(b,"syntax error");
+            m_serialPort.write("Steering command failed: Syntax error\n");
         }
     }
 

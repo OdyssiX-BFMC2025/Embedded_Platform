@@ -62,38 +62,70 @@ namespace drivers
     * 
     * The key differs for each functionalities, so for each callback function.
     */
+    /**
+     * @brief Serial Monitor class for handling serial communication
+     * 
+     * This class inherits from CTask and implements a serial monitor that:
+     * 1. Receives messages in format: #ID:MESSAGE;;\r\n
+     * 2. Parses and validates the message format
+     * 3. Calls appropriate handler function based on message ID
+     * 4. Sends response in format: @ID:RESPONSE;;\r\n
+     *
+     * Flow:
+     * - Interrupt handler serialRxCallback() stores incoming bytes in RxBuffer
+     * - Main _run() loop processes RxBuffer contents:
+     *   a. Looks for # to start new message
+     *   b. Collects chars until \n found
+     *   c. Validates message format
+     *   d. Parses ID and message content
+     *   e. Calls registered handler function
+     *   f. Formats and sends response
+     * - serialTxCallback() handles sending data from TxBuffer
+     */
     class CSerialMonitor : public utils::CTask
     {
         public:
+            // Callback function type that takes const char* input and char* output
             typedef mbed::Callback<void(char const *, char *)> FCallback;
+            
+            // Map type to store message ID -> handler function mappings
             typedef std::map<string,FCallback> CSerialSubscriberMap;
 
-            /* Constructor */
+            /* Constructor takes serial port and map of message handlers */
             CSerialMonitor(
                 UnbufferedSerial& f_serialPort,
                 CSerialSubscriberMap f_serialSubscriberMap
             );
-            /* Destructor */
+            
+            /* Virtual destructor */
             ~CSerialMonitor();
+
         private:
-            /* Rx callback actions */
+            /* Interrupt handler for receiving serial data */
             void serialRxCallback();
-            /* Tx callback actions */
+            
+            /* Interrupt handler for transmitting serial data */
             void serialTxCallback();
-            /* Run method */
+            
+            /* Main processing loop inherited from CTask */
             virtual void _run();
 
-            /** @brief Serial communication port */
+            /** @brief Reference to serial port for communication */
             UnbufferedSerial& m_serialPort;
-            /** @brief Rx buffer */
+            
+            /** @brief Circular buffer for received data */
             utils::CQueue<char,255> m_RxBuffer;
-            /** @brief Tx buffer */
+            
+            /** @brief Circular buffer for data to transmit */
             utils::CQueue<char,255> m_TxBuffer;
-            /** @brief Data buffer */
+            
+            /** @brief Buffer for message parsing */
             array<char,256> m_parseBuffer;
-            /** @brief Parse iterator */
+            
+            /** @brief Iterator for parsing buffer position */
             array<char,256>::iterator m_parseIt;
-            /** @brief Serial subscriber */
+            
+            /** @brief Maps message IDs to their handler functions */
             CSerialSubscriberMap m_serialSubscriberMap;
     }; // class CSerialMonitor
 
